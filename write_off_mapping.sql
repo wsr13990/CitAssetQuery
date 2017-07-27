@@ -45,13 +45,14 @@ SET @dynamic_sql = (
 			))
 	FROM far_not_written_off
 );
-SET @pivot_table_name = "pivot_far_inner_join_write_off";
 SET @sql = CONCAT(
-		'CREATE TEMPORARY TABLE ',
-		@pivot_table_name,
-		' AS ',
-		'SELECT asset_number, ',
-		@dynamic_sql,
+		'CREATE TEMPORARY TABLE
+		pivot_far_inner_join_write_off
+		AS
+		SELECT 	asset_number,
+			category AS fiscal_category,
+			category_id,',
+			@dynamic_sql,
 		'FROM far_inner_join_write_off
 		GROUP BY asset_number'
 		);
