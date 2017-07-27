@@ -45,7 +45,7 @@ SET @dynamic_sql = (
 			))
 	FROM far_not_written_off
 );
-SET @pivot_table_name = "far_far_inner_join_write_off";
+SET @pivot_table_name = "pivot_far_inner_join_write_off";
 SET @sql = CONCAT(
 		'CREATE TEMPORARY TABLE ',
 		@pivot_table_name,
@@ -59,11 +59,32 @@ PREPARE pivot FROM @sql;
 EXECUTE pivot;
 DEALLOCATE PREPARE pivot;
 
-CREATE TEMPORARY TABLE mapping_write_off
-AS	
-	SELECT wo.* ,far.* 
+
+SET @sourceSum = (SELECT GROUP_CONCAT( DISTINCT CONCAT('far.',source) SEPARATOR ' + ') FROM far_not_written_off);
+SET @mapping_write_off = CONCAT(
+'CREATE TEMPORARY TABLE mapping_write_off 
+AS
+        SELECT temp.*, temp.COST - temp.TOTAL AS difference FROM (	
+	SELECT 	wo.write_off_id AS write_off_id,
+		wo.site_id AS site_id,
+		wo.batch AS batch,
+		wo.give_up_date AS give_up_date,
+		wo.dpis AS dpis,
+		wo.commercial_category AS commercial_category,
+		wo.cost AS cost,
+		far.*,
+		(', @sourceSum, ') AS total
 	FROM current_write_off wo
-	LEFT JOIN far_far_inner_join_write_off far ON wo.asset_number = far.asset_number;
+	LEFT JOIN pivot_far_inner_join_write_off far ON wo.asset_number = far.asset_number) temp'
+ ,' ');
+ 
+PREPARE mapping FROM @mapping_write_off;
+EXECUTE mapping;
+DEALLOCATE PREPARE mapping;
+
+SELECT @mapping_write_off;
+DROP TABLE mapping_write_off;
+SELECT * FROM mapping_write_off;
 
 
 SHOW INDEX FROM far_inner_join_write_off;
