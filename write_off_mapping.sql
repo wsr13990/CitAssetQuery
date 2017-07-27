@@ -60,7 +60,7 @@ EXECUTE pivot;
 DEALLOCATE PREPARE pivot;
 
 
-SET @sourceSum = (SELECT GROUP_CONCAT( DISTINCT CONCAT('far.',source) SEPARATOR ' + ') FROM far_not_written_off);
+SET @sourceSum = (SELECT GROUP_CONCAT(DISTINCT CONCAT('far.',source) SEPARATOR ' + ') FROM far_not_written_off);
 SET @mapping_write_off = CONCAT(
 'CREATE TEMPORARY TABLE mapping_write_off 
 AS
@@ -77,16 +77,8 @@ AS
 	FROM current_write_off wo
 	LEFT JOIN pivot_far_inner_join_write_off far ON wo.asset_number = far.asset_number) temp'
  ,' ');
- 
 PREPARE mapping FROM @mapping_write_off;
 EXECUTE mapping;
 DEALLOCATE PREPARE mapping;
 
-SELECT @mapping_write_off;
-DROP TABLE mapping_write_off;
 SELECT * FROM mapping_write_off;
-
-
-SHOW INDEX FROM far_inner_join_write_off;
-SHOW STATUS LIKE '%tmp%';
-SELECT * FROM pivot_far_inner_join_write_off;	
