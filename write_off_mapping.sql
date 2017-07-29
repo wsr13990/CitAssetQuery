@@ -30,6 +30,7 @@ AS (
 		far.asset_number AS asset_number,
 		far.addition_period AS addition_period,
 		far.source AS source,
+		far.source_detail AS source_detail,
 		far.category AS category,
 		far.category_id AS category_id,
 		far.cost AS cost
@@ -42,12 +43,12 @@ SET @dynamic_sql = (
 	SELECT
 		GROUP_CONCAT(DISTINCT
 			CONCAT(
-				'sum( if (source = '
+				'sum( if (source_detail = '
 				,'"'
-				, source
+				, source_detail
 				,'"'
 				,' , cost,0) ) AS '
-				, source,
+				, source_detail,
 				' '
 			))
 	FROM far_not_written_off
@@ -68,7 +69,7 @@ EXECUTE pivot;
 DEALLOCATE PREPARE pivot;
 
 
-SET @sourceSum = (SELECT GROUP_CONCAT(DISTINCT CONCAT('far.',source) SEPARATOR ' + ') FROM far_not_written_off);
+SET @sourceSum = (SELECT GROUP_CONCAT(DISTINCT CONCAT('far.',source_detail) SEPARATOR ' + ') FROM far_not_written_off);
 SET @mapping_write_off = CONCAT(
 'CREATE TEMPORARY TABLE mapping_write_off 
 AS
@@ -80,6 +81,7 @@ AS
 		wo.dpis AS dpis,
 		wo.commercial_category AS commercial_category,
 		wo.cost AS cost,
+		wo.asset_number AS asset_number_wo,
 		far.*,
 		(', @sourceSum, ') AS total
 	FROM current_write_off wo

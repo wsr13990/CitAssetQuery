@@ -34,6 +34,8 @@ WHERE far.asset_id = far_dpis.asset_id;
 SELECT * FROM far
 WHERE MONTH(addition_period) = 6;
 
+SELECT DISTINCT source_detail FROM far;
+
 /*display category not mapped on asset category*/ 
 SELECT DISTINCT category, category_id FROM far
 WHERE dpis_month_end = 0 OR dpis_year_end = 0;
