@@ -1,5 +1,12 @@
 SET @wo_month = 5;
 
+
+DROP TABLE far_not_written_off;
+DROP TABLE current_write_off;
+DROP TABLE far_inner_join_write_off;
+DROP TABLE pivot_far_inner_join_write_off;
+DROP TABLE mapping_write_off;
+
 CREATE
 TEMPORARY TABLE far_not_written_off
 (INDEX (asset_number), UNIQUE (asset_id))
