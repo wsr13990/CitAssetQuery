@@ -1,6 +1,8 @@
 SET @wo_month = 5;
+SET @wo_year = 2017;
 
 
+SET @wo_date = LAST_DAY(CONCAT(CAST(@wo_year AS CHAR(4)),"-", CAST(@wo_month AS CHAR(2)),"-", "1"));
 DROP TABLE far_not_written_off;
 DROP TABLE current_write_off;
 DROP TABLE far_inner_join_write_off;
@@ -12,15 +14,17 @@ TEMPORARY TABLE far_not_written_off
 (INDEX (asset_number), UNIQUE (asset_id))
 AS (
 	SELECT * FROM far
-	WHERE write_off_date IS NULL
+	WHERE	(write_off_date > @wo_date OR write_off_date IS NULL)
+		AND source_detail != "bulk_2005"
 );
+
 
 CREATE
 TEMPORARY TABLE current_write_off
 (INDEX (asset_number), UNIQUE (write_off_id))
 AS (
 	SELECT * FROM write_off
-	WHERE MONTH(give_up_date) = @wo_month
+	WHERE MONTH(give_up_date) = @wo_month AND YEAR(give_up_date) = @wo_year
 	GROUP BY asset_number);
 
 CREATE TEMPORARY TABLE far_inner_join_write_off
