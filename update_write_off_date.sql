@@ -1,3 +1,13 @@
+SELECT far.*
+FROM (SELECT * FROM far WHERE source_detail = "bulk_2005") far
+INNER JOIN (SELECT asset_number, bulk_2005 FROM mapping_write_off WHERE bulk_2005 != 0) temp
+ON far.asset_number = temp.asset_number
+GROUP BY far.asset_number;
+
+
+
+SELECT * FROM mapping_write_off WHERE bulk_2005 != 0;
+
 SELECT *, temp.far_cost - temp.wo_cost AS difference
 FROM
 	(SELECT SUM(far.cost) AS far_cost,
