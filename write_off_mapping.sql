@@ -1,4 +1,4 @@
-SET @wo_month = 5;
+SET @wo_month = 6;
 SET @wo_year = 2017;
 
 
@@ -8,6 +8,7 @@ DROP TABLE current_write_off;
 DROP TABLE far_inner_join_write_off;
 DROP TABLE pivot_far_inner_join_write_off;
 DROP TABLE mapping_write_off;
+DROP TABLE control_bulk_2005;
 
 CREATE
 TEMPORARY TABLE far_not_written_off
@@ -107,11 +108,10 @@ UPDATE mapping_write_off
 SET 	total = (',@update_sum,'),
 	difference = cost - total
 WHERE difference != 0;
-')
-PREPARE update_mapping FROM @update_mapping
-EXECUTE update_mapping
+');
+PREPARE update_mapping FROM @update_mapping;
+EXECUTE update_mapping;
 DEALLOCATE PREPARE update_mapping;
-
 
 
 /*Print out current month wo mapping*/
