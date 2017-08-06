@@ -26,9 +26,11 @@ CREATE
 TEMPORARY TABLE current_write_off
 (INDEX (asset_number), UNIQUE (write_off_id))
 AS (
-	SELECT * FROM write_off
+	SELECT write_off.*, write_off.write_off_id AS asset_id FROM write_off
 	WHERE MONTH(give_up_date) = @wo_month AND YEAR(give_up_date) = @wo_year
 	GROUP BY asset_number);
+	
+CALL `fill_dpis_monthAndyear_by_tableName`("current_write_off");
 
 CREATE TEMPORARY TABLE far_inner_join_write_off
 (INDEX (asset_number), UNIQUE(asset_id))
