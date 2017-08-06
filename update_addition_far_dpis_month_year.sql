@@ -1,8 +1,8 @@
 SET	@addition_month = 6,
 	@addition_year = 2017;
 
-DROP TABLE far_addition;
-DROP TABLE updated_far_addition;
+DROP TABLE IF EXISTS far_addition;
+DROP TABLE IF EXISTS updated_far_addition;
 
 CREATE TEMPORARY TABLE far_addition
 AS SELECT * FROM far

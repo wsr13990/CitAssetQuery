@@ -3,12 +3,12 @@ SET @wo_year = 2017;
 
 
 SET @wo_date = LAST_DAY(CONCAT(CAST(@wo_year AS CHAR(4)),"-", CAST(@wo_month AS CHAR(2)),"-", "1"));
-DROP TABLE far_not_written_off;
-DROP TABLE current_write_off;
-DROP TABLE far_inner_join_write_off;
-DROP TABLE pivot_far_inner_join_write_off;
-DROP TABLE mapping_write_off;
-DROP TABLE control_bulk_2005;
+DROP TABLE IF EXISTS far_not_written_off;
+DROP TABLE IF EXISTS current_write_off;
+DROP TABLE IF EXISTS far_inner_join_write_off;
+DROP TABLE IF EXISTS pivot_far_inner_join_write_off;
+DROP TABLE IF EXISTS mapping_write_off;
+DROP TABLE IF EXISTS control_bulk_2005;
 
 CREATE
 TEMPORARY TABLE far_not_written_off

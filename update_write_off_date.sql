@@ -1,4 +1,4 @@
-DROP TABLE bulk_2005_wo_update;
+DROP TABLE IF EXISTS bulk_2005_wo_update;
 CREATE TEMPORARY TABLE bulk_2005_wo_update
 AS(
 	SELECT 	"write off " AS entry_type,
