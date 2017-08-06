@@ -10,7 +10,6 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		SET paramMonth = 6;
 		SET paramYear = 2017;
 
-
 		SET @wo_date = LAST_DAY(CONCAT(CAST(paramYear AS CHAR(4)),"-", CAST(paramMonth AS CHAR(2)),"-", "1"));
 		DROP TABLE IF EXISTS far_not_written_off;
 		DROP TABLE IF EXISTS current_write_off;
@@ -90,7 +89,7 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		'CREATE TEMPORARY TABLE mapping_write_off 
 		AS
 			SELECT temp.*, temp.COST - temp.TOTAL AS difference FROM (	
-			SELECT 	wo.write_off_id AS write_off_id,
+			SELECT 	wo.write_off_id AS asset_id,
 				wo.site_id AS site_id,
 				wo.batch AS batch,
 				wo.give_up_date AS give_up_date,
@@ -121,7 +120,9 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		PREPARE update_mapping FROM @update_mapping;
 		EXECUTE update_mapping;
 		DEALLOCATE PREPARE update_mapping;
-
+		
+		CALL `fill_dpis_monthAndyear_by_tableName`("mapping_write_off");
+		
 		/*Print out current month wo mapping*/
 		SELECT * FROM mapping_write_off;
 
