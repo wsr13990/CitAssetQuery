@@ -16,13 +16,18 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		DROP TABLE IF EXISTS pivot_inner_join_write_off;
 		DROP TABLE IF EXISTS mapping_write_off;
 		DROP TABLE IF EXISTS control_bulk_2005;
-
+		DROP TABLE IF EXISTS control;
+		
+		CREATE TEMPORARY TABLE control(`status` VARCHAR(100));
 		CREATE
 		TEMPORARY TABLE not_written_off
 		(INDEX (asset_number), UNIQUE (asset_id))
 		AS (
-			SELECT * FROM far_depre
-			WHERE	(write_off_date >= @wo_date OR write_off_date IS NULL)
+			SELECT	`asset_id`,`entry_type`,`bulk_2005_write_off_date`,`write_off_date`,`asset_number`,
+				`addition_period`,`source`,`source_detail`,`dpis`,`dpis_month`,`dpis_month_end`,
+				`dpis_year`,`dpis_year_end`,`category`,`category_id`,`cost`
+			FROM far_depre
+			WHERE (write_off_date >= @wo_date OR write_off_date IS NULL)
 		);
 
 		UPDATE not_written_off
@@ -40,16 +45,16 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		CREATE TEMPORARY TABLE inner_join_write_off
 		(INDEX (asset_number), UNIQUE(asset_id))
 		AS (
-			SELECT	far_depre.asset_id AS asset_id,
-				far_depre.asset_number AS asset_number,
-				far_depre.addition_period AS addition_period,
-				far_depre.source AS source,
-				far_depre.source_detail AS source_detail,
-				far_depre.category AS category,
-				NULL AS category_id,
-				far_depre.cost AS cost
-			FROM not_written_off far_depre
-			INNER JOIN current_write_off wo ON wo.asset_number = far_depre.asset_number
+			SELECT	not_written_off.asset_id AS asset_id,
+				not_written_off.asset_number AS asset_number,
+				not_written_off.addition_period AS addition_period,
+				not_written_off.source AS source,
+				not_written_off.source_detail AS source_detail,
+				not_written_off.category AS category,
+				not_written_off.category_id AS category_id,
+				not_written_off.cost AS cost
+			FROM not_written_off
+			INNER JOIN current_write_off wo ON wo.asset_number = not_written_off.asset_number
 		);
 		
 
@@ -85,7 +90,7 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		
 		SET @sourceSum = (SELECT GROUP_CONCAT(DISTINCT CONCAT('pivot.',source_detail) SEPARATOR ' + ') FROM not_written_off);
 		SET @mapping_write_off = CONCAT(
-		'CREATE TEMPORARY TABLE mapping_write_off 
+		'CREATE TABLE mapping_write_off 
 		AS
 			SELECT temp.*, temp.COST - temp.TOTAL AS difference FROM (	
 			SELECT 	wo.write_off_id AS asset_id,
@@ -122,12 +127,40 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		
 		UPDATE mapping_write_off SET category_id = NULL;
 		
-		CALL `fill_categoryId_byTableName`("mapping_write_off");
-		CALL `fill_dpis_monthAndyear_by_tableName`("mapping_write_off");
 		
-		/*Print out current month wo mapping*/
-		SELECT * FROM mapping_write_off;
+		#Checking that all write of found on far
+		SET @wo_not_found = (SELECT COUNT(category) FROM mapping_write_off WHERE category IS NULL OR category = "");
+		IF @wo_not_found = 0 THEN
+			INSERT INTO control VALUES("OK : All wo found in far");
+		ELSE
+			INSERT INTO control VALUES("WARNING : Several wo not found in far");
+		END IF;
+		
+		#Checking that the mapping cost of bulk_2005 is valid and if there any partial write off in 2005
+		CREATE TEMPORARY TABLE control_bulk_2005
+		AS
+		SELECT *, calculated_bulk_2005 - actual_bulk_2005 AS difference
+		FROM(
+			SELECT wo.asset_number, wo.bulk_2005 AS calculated_bulk_2005, temp.cost AS actual_bulk_2005 FROM mapping_write_off wo
+			INNER JOIN(
+				SELECT far.* FROM
+					(SELECT * FROM far WHERE source_detail = "bulk_2005") far
+				INNER JOIN current_write_off
+				ON far.asset_number = current_write_off.asset_number) temp
+			ON wo.asset_number = temp.asset_number
+			GROUP BY wo.asset_number
+		) temp;
+		SET @partial_wo_control = (SELECT SUM(ABS(difference)) FROM control_bulk_2005);
+		IF @partial_wo_control = 0 THEN
+			INSERT INTO control VALUES("OK : Bulk 2005 valid & No partial write off");
+		ELSE
+			INSERT INTO control VALUES("WARNING : Partial write off");
+		END IF;
+		
+		#Print out mapping control
+		SELECT * FROM control;
 
     END$$
 
 DELIMITER ;
+	

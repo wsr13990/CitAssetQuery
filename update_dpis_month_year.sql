@@ -9,7 +9,9 @@ DROP PROCEDURE IF EXISTS `fill_dpis_monthAndyear_by_tableName`$$
 CREATE PROCEDURE `fill_dpis_monthAndyear_by_tableName`(IN tableName VARCHAR(50))
 	MODIFIES SQL DATA
 BEGIN
-#check whether dpis_month, dpis_month_end, dpis_year, dpis_year_end exist, if not add columns
+	DROP TABLE IF EXISTS control;
+	
+	#check whether dpis_month, dpis_month_end, dpis_year, dpis_year_end exist, if not add columns
 	SET @count = 	(SELECT COUNT(*) FROM `information_schema`.`COLUMNS`
 			WHERE 	`TABLE_SCHEMA` = 'cit_asset' AND
 				`TABLE_NAME` = tableName AND
@@ -24,7 +26,7 @@ BEGIN
 		DEALLOCATE PREPARE addColumn;
 	END IF;
 	
-#update the dpis_month, dpis_month_end, dpis_year, dpis_year_end
+	#update the dpis_month, dpis_month_end, dpis_year, dpis_year_end
 	DROP TEMPORARY TABLE IF EXISTS far_dpis;
 	
 	SET @stmt = CONCAT('UPDATE ',tableName,' SET dpis_month = MONTH(dpis), dpis_year = YEAR(dpis) WHERE dpis_month = 0 OR dpis_month_end = 0 OR dpis_year = 0 OR dpis_year_end = 0;');
@@ -66,6 +68,31 @@ BEGIN
 	PREPARE stmt FROM @stmt;
 	EXECUTE stmt;
 	DEALLOCATE PREPARE stmt;
+	
+	#Honestly this is the most ugly code i've ever write(0_0)
+	#If there any shortcut to write this part better??
+	#Check if all dpis_month, dpis_month_end, dpis_year, dpis_year_end are successfully filled
+	(CREATE TEMPORARY TABLE control(`status` VARCHAR(100));
+	SET @dpisMonthNullStatement = CONCAT('set @dpisMonthNull = (select count(dpis_month) from ',tableName,' where dpis_month is null or dpis_month = 0 or dpis_month = "");');
+	SET @dpisMonthEndNullStatement = CONCAT('set @dpisMonthEndNull = (select count(dpis_month_end) from ',tableName,' where dpis_month_end is null or dpis_month_end = 0 or dpis_month_end = "");');
+	SET @dpisYearNullStatement = CONCAT('set @dpisYearNull = (select count(dpis_year) from ',tableName,' where dpis_year is null or dpis_year = 0 or dpis_year = "");');
+	SET @dpisYearEndNullStatement = CONCAT('set @dpisYearEndNull = (select count(dpis_year_end) from ',tableName,' where dpis_year_end is null or dpis_year_end = 0 or dpis_year_end = "");');
+	PREPARE dpisMonthNullStatement FROM @dpisMonthNullStatement;
+	PREPARE dpisMonthEndNullStatement FROM @dpisMonthEndNullStatement;
+	PREPARE dpisYearNullStatement FROM @dpisYearNullStatement;
+	PREPARE dpisYearEndNullStatement FROM @dpisYearEndNullStatement;
+	EXECUTE dpisMonthNullStatement;
+	EXECUTE dpisMonthEndNullStatement;
+	EXECUTE dpisYearNullStatement;
+	EXECUTE dpisYearEndNullStatement;)
+	
+	SET @control = @dpisMonthNull+@dpisMonthEndNull+@dpisYearNull+@dpisYearEndNull;
+	IF @control = 0 THEN
+		INSERT INTO control VALUES("OK : All dpis month year filled");
+	ELSE
+		INSERT INTO control VALUES("WARNING : Several dpis month year is missing");
+	END IF;
+	SELECT * FROM control;
 	
 END$$
 

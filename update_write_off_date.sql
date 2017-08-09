@@ -4,34 +4,38 @@ USE`cit_asset`$$
 
 DROP PROCEDURE IF EXISTS update_write_off_date$$
 
-CREATE PROCEDURE update_write_off_date()
-MODIFIES SQL DATA
-BEGIN$$
-	DROP TABLE IF EXISTS bulk_2005_wo_update;
-	CREATE TEMPORARY TABLE bulk_2005_wo_update
-	AS(
-		SELECT 	"write off " AS entry_type,
-			CAST(@wo_date AS DATE) AS bulk_2005_write_off_date,
-			far.asset_number,
-			far.addition_period,
-			far.source,
-			far.source_detail,
-			far.dpis,
-			far.dpis_month,
-			far.dpis_month_end,
-			far.dpis_year,
-			far.dpis_year_end,
-			far.category,
-			far.category_id,
-			-temp.bulk_2005 AS cost
-		FROM (SELECT * FROM far WHERE source_detail = "bulk_2005") far
-		INNER JOIN (SELECT asset_number, bulk_2005 FROM mapping_write_off WHERE bulk_2005 != 0) temp
-		ON far.asset_number = temp.asset_number
-		GROUP BY far.asset_number
-	);
-
-	#TODO: 	add if statement to check if it already updated before	
-	INSERT INTO far 	(entry_type,
+CREATE PROCEDURE `update_write_off_date`(IN paramMonth INT(2), IN paramYear INT(4))
+	MODIFIES SQL DATA
+BEGIN
+	#Check if wo allocated to bulk 2005 already updated
+	SET @wo_date = LAST_DAY(CONCAT(CAST(paramYear AS CHAR(4)),"-", CAST(paramMonth AS CHAR(2)),"-", "1"));
+	SET @updated_current_wo_2005 = (SELECT COUNT(`bulk_2005_write_off_date`)
+					FROM far_depre WHERE `bulk_2005_write_off_date` = @wo_date);
+	IF @updated_current_wo_2005 = 0 THEN
+		#update the table
+		DROP TABLE IF EXISTS bulk_2005_wo_update;
+		CREATE TEMPORARY TABLE bulk_2005_wo_update
+		AS(
+			SELECT 	"write off" AS entry_type,
+				CAST(@wo_date AS DATE) AS bulk_2005_write_off_date,
+				far_depre.asset_number,
+				far_depre.addition_period,
+				far_depre.source,
+				far_depre.source_detail,
+				far_depre.dpis,
+				far_depre.dpis_month,
+				far_depre.dpis_month_end,
+				far_depre.dpis_year,
+				far_depre.dpis_year_end,
+				far_depre.category,
+				far_depre.category_id,
+				-temp.bulk_2005 AS cost
+			FROM (SELECT * FROM far_depre WHERE source_detail = "bulk_2005") far_depre
+			INNER JOIN (SELECT asset_number, bulk_2005 FROM mapping_write_off WHERE bulk_2005 != 0) temp
+			ON far_depre.asset_number = temp.asset_number
+			GROUP BY far_depre.asset_number
+		);
+		INSERT INTO far_depre (entry_type,
 				bulk_2005_write_off_date,
 				asset_number,
 				addition_period,
@@ -45,16 +49,29 @@ BEGIN$$
 				category,
 				category_id,
 				cost)
-	SELECT * FROM bulk_2005_wo_update;
-
-	SELECT *, temp.far_cost - temp.wo_cost AS difference
-	FROM
-		(SELECT SUM(far_not_written_off.cost) AS far_cost,
-			SUM(far_inner_join_write_off.cost) AS wo_cost
-			FROM far_not_written_off,far_inner_join_write_off
-		WHERE write_off_date IS NULL AND far_not_written_off.asset_id = far_inner_join_write_off.asset_id) temp;
-
-	UPDATE far, (SELECT * FROM far_inner_join_write_off WHERE source_detail != "bulk_2005") inner_join
-	SET far.write_off_date = @wo_date
-	WHERE far.write_off_date IS NULL AND far.asset_id = inner_join.asset_id;
+		SELECT * FROM bulk_2005_wo_update;
+	END IF;
+	
+	
+	#Check if the wo cost and the cost of far_depre written off is same
+	SET @wo_cost_vs_far_depre_cost = 	(SELECT temp.far_depre_cost - temp.wo_cost AS difference FROM
+						(SELECT SUM(not_written_off.cost) AS far_depre_cost,
+							SUM(inner_join_write_off.cost) AS wo_cost
+							FROM not_written_off,inner_join_write_off
+						WHERE write_off_date IS NULL AND not_written_off.asset_id = inner_join_write_off.asset_id) temp
+					);		
+	#Check if current wo other than bulk 2005 already updated
+	SET @wo_date = LAST_DAY(CONCAT(CAST(paramYear AS CHAR(4)),"-", CAST(paramMonth AS CHAR(2)),"-", "1"));
+	SET @updated_current_wo = (SELECT COUNT(`write_off_date`) FROM far_depre WHERE `write_off_date` = @wo_date);
+	
+	#Update wo date for the far_depre other than bulk 2005	
+	IF (@updated_current_wo = 0 AND @wo_cost_vs_far_depre_cost = 0)THEN		
+		UPDATE far_depre, (SELECT * FROM far_depre_inner_join_write_off WHERE source_detail != "bulk_2005") inner_join
+		SET far_depre.write_off_date = @wo_date
+		WHERE far_depre.write_off_date IS NULL AND far_depre.asset_id = inner_join.asset_id;
+	END IF;
+	
+	
 END$$
+
+DELIMITER ;
