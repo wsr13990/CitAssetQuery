@@ -7,6 +7,8 @@ DROP PROCEDURE IF EXISTS update_write_off_date$$
 CREATE PROCEDURE `update_write_off_date`(IN paramMonth INT(2), IN paramYear INT(4))
 	MODIFIES SQL DATA
 BEGIN
+	DROP TABLE IF EXISTS control;
+	CREATE TEMPORARY TABLE control(`status` VARCHAR(100));
 	#Check if wo allocated to bulk 2005 already updated
 	SET @wo_date = LAST_DAY(CONCAT(CAST(paramYear AS CHAR(4)),"-", CAST(paramMonth AS CHAR(2)),"-", "1"));
 	SET @updated_current_wo_2005 = (SELECT COUNT(`bulk_2005_write_off_date`)
@@ -50,6 +52,9 @@ BEGIN
 				category_id,
 				cost)
 		SELECT * FROM bulk_2005_wo_update;
+		INSERT INTO control VALUES("OK : Bulk 2005 wo updated");
+	ELSE
+		INSERT INTO control VALUES("WARNING : Bulk 2005 wo already updated before");
 	END IF;
 	
 	
@@ -69,9 +74,12 @@ BEGIN
 		UPDATE far_depre, (SELECT * FROM far_depre_inner_join_write_off WHERE source_detail != "bulk_2005") inner_join
 		SET far_depre.write_off_date = @wo_date
 		WHERE far_depre.write_off_date IS NULL AND far_depre.asset_id = inner_join.asset_id;
+		INSERT INTO control VALUES("OK : wo other than bulk 2005 updated");
+	ELSE
+		INSERT INTO control VALUES("WARNING : wo other than bulk 2005 already updated before");
 	END IF;
 	
-	
+	SELECT * FROM control;
 END$$
 
 DELIMITER ;

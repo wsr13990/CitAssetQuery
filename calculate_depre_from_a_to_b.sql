@@ -5,7 +5,7 @@ USE `cit_asset`$$
 
 DROP PROCEDURE IF EXISTS `calculate_straightLine_depre_from_a_to_b`$$
 
-CREATE PROCEDURE `calculate_straightLine_depre_from_a_to_b`(IN beginYear INTEGER(4),IN endYear INTEGER(4), IN tableName VARCHAR(50))
+CREATE PROCEDURE `calculate_straightLine_depre_from_a_to_b`(IN changeYear INTEGER(4),IN endYear INTEGER(4), IN tableName VARCHAR(50))
     MODIFIES SQL DATA
 BEGIN
 	SET @period = beginYear;

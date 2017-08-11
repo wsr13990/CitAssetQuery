@@ -71,7 +71,7 @@ BEGIN
 	
 	#Honestly this is the most ugly code i've ever write(0_0)
 	#If there any shortcut to write this part better??
-	#Check if all dpis_month, dpis_month_end, dpis_year, dpis_year_end are successfully filled
+	#This part check if all dpis_month, dpis_month_end, dpis_year, dpis_year_end are successfully filled
 	(CREATE TEMPORARY TABLE control(`status` VARCHAR(100));
 	SET @dpisMonthNullStatement = CONCAT('set @dpisMonthNull = (select count(dpis_month) from ',tableName,' where dpis_month is null or dpis_month = 0 or dpis_month = "");');
 	SET @dpisMonthEndNullStatement = CONCAT('set @dpisMonthEndNull = (select count(dpis_month_end) from ',tableName,' where dpis_month_end is null or dpis_month_end = 0 or dpis_month_end = "");');
