@@ -71,7 +71,7 @@ BEGIN
 	
 	#Update wo date for the far_depre other than bulk 2005	
 	IF (@updated_current_wo = 0 AND @wo_cost_vs_far_depre_cost = 0)THEN		
-		UPDATE far_depre, (SELECT * FROM far_depre_inner_join_write_off WHERE source_detail != "bulk_2005") inner_join
+		UPDATE far_depre, (SELECT * FROM inner_join_write_off WHERE source_detail != "bulk_2005") inner_join
 		SET far_depre.write_off_date = @wo_date
 		WHERE far_depre.write_off_date IS NULL AND far_depre.asset_id = inner_join.asset_id;
 		INSERT INTO control VALUES("OK : wo other than bulk 2005 updated");

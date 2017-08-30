@@ -2,9 +2,9 @@ DELIMITER $$
 
 USE `cit_asset`$$
 
-DROP PROCEDURE IF EXISTS `calculate_depreTower_from2011_to`$$
+DROP PROCEDURE IF EXISTS `calculate_depreTower_year`$$
 
-CREATE PROCEDURE `calculate_depreTower_from2011_to`(IN parameter_year INTEGER(4), IN tableName VARCHAR(50))
+CREATE PROCEDURE `calculate_depreTower_year`(IN parameter_year INTEGER(4), IN tableName VARCHAR(50))
     MODIFIES SQL DATA
 BEGIN
 #check if column exists, if not add new yearly depreciation and NBV
@@ -18,13 +18,11 @@ BEGIN
 		EXECUTE addColumn;
 		DEALLOCATE PREPARE addColumn;
 	END IF;
-	SET @year = 2011;
-	WHILE @year <= parameter_year DO	
-		SET @sqlstmt = CONCAT('update ', tableName,' set d_', @year,'= get_tower_depre(tower_year_as_building,',@year,',n_2010), n_', @year,'= n_',@year-1,' - d_', @year,' where source_detail = "tower" and dpis_year < 2011;');
-		PREPARE stmt FROM @sqlstmt;
-		EXECUTE stmt;
-		SET @year = @year +1;
-	END WHILE;
+	
+	SET @sqlstmt = CONCAT('update ', tableName,' set d_', parameter_year,'= if(dpis_year = 2011 and dpis_month = 1, get_tower_depre(tower_year_as_building, ',parameter_year,', cost), get_tower_depre(tower_year_as_building,',parameter_year,',n_2010)), n_', parameter_year,'= if(dpis_year = 2011 and parameter_year = 2011, cost - d_',parameter_year,', n_',parameter_year-1,' - d_', parameter_year,') where (dpis_year <= 2011) or (dpis_year = 2011 and dpis_month = 1);');
+	PREPARE stmt FROM @sqlstmt;
+	EXECUTE stmt;
+		
 	SET @akum = CONCAT_WS('+', @akum, CONCAT(' ', tableName,'.d_',parameter_year,' '));
 		IF parameter_year = (parameter_year - 1) THEN
 			SET @akum = CONCAT('update ', tableName,' set akum_upto_prev_Year = (', @akum,');');

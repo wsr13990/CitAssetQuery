@@ -19,15 +19,15 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		DROP TABLE IF EXISTS control;
 		
 		CREATE TEMPORARY TABLE control(`status` VARCHAR(100));
-		CREATE
-		TEMPORARY TABLE not_written_off
-		(INDEX (asset_number), UNIQUE (asset_id))
+		CREATE TEMPORARY TABLE not_written_off
+		(INDEX (asset_number), INDEX(source_detail), INDEX(write_off_date), UNIQUE (asset_id) )
 		AS (
 			SELECT	`asset_id`,`entry_type`,`bulk_2005_write_off_date`,`write_off_date`,`asset_number`,
 				`addition_period`,`source`,`source_detail`,`dpis`,`dpis_month`,`dpis_month_end`,
 				`dpis_year`,`dpis_year_end`,`category`,`category_id`,`cost`
-			FROM far_depre
-			WHERE (write_off_date >= @wo_date OR write_off_date IS NULL)
+			FROM `far_depre`
+			WHERE (write_off_date >= @wo_date OR write_off_date IS NULL) AND
+			source != "ReverseManual2005" AND source != "WO_Manual2011" AND source != "WO_Manual2012" AND source != "WO_Manual2013" AND source != "WO_Manual2014" AND source != "WO_Manual2016"
 		);
 
 		UPDATE not_written_off
@@ -36,7 +36,7 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 
 		CREATE
 		TEMPORARY TABLE current_write_off
-		(INDEX (asset_number), UNIQUE (write_off_id))
+		(INDEX (asset_number), INDEX(give_up_date),UNIQUE (write_off_id))
 		AS (
 			SELECT write_off.write_off_id AS asset_id, write_off.* FROM write_off
 			WHERE MONTH(give_up_date) = paramMonth AND YEAR(give_up_date) = paramYear
@@ -80,8 +80,8 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 					category AS category,
 					category_id,',
 					@dynamic_sql,
-				'FROM inner_join_write_off
-				GROUP BY asset_number'
+				' FROM inner_join_write_off
+				GROUP BY asset_number;'
 				);
 		PREPARE pivot FROM @sql;
 		EXECUTE pivot;
@@ -144,7 +144,7 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 			SELECT wo.asset_number, wo.bulk_2005 AS calculated_bulk_2005, temp.cost AS actual_bulk_2005 FROM mapping_write_off wo
 			INNER JOIN(
 				SELECT far.* FROM
-					(SELECT * FROM far WHERE source_detail = "bulk_2005") far
+					(SELECT * FROM far_depre WHERE source_detail = "bulk_2005") far
 				INNER JOIN current_write_off
 				ON far.asset_number = current_write_off.asset_number) temp
 			ON wo.asset_number = temp.asset_number
