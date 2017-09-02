@@ -8,7 +8,7 @@ READS SQL DATA
 BEGIN
 	
 	DROP TABLE IF EXISTS prevPivotSL0608;
-	DROP TABLE IF EXISTS prevPivotReverseManual2005;
+	DROP TABLE IF EXISTS prevpivotRevManual2005;
 	DROP TABLE IF EXISTS prevPivotFar2006;
 	DROP TABLE IF EXISTS prevPivotFar2007;
 	DROP TABLE IF EXISTS prevPivotFar2008;
@@ -23,7 +23,7 @@ BEGIN
 	DROP TABLE IF EXISTS prevPivotFar2017;
 	
 	DROP TABLE IF EXISTS pivotSL0608;
-	DROP TABLE IF EXISTS pivotReverseManual2005;
+	DROP TABLE IF EXISTS pivotRevManual2005;
 	DROP TABLE IF EXISTS pivotFar2006;
 	DROP TABLE IF EXISTS pivotFar2007;
 	DROP TABLE IF EXISTS pivotFar2008;
@@ -39,7 +39,7 @@ BEGIN
 	
 	
 	CALL `get_pivot_by_month_year_source_table`(paramMonth-1,paramYear, "SL0608", "prevPivotSL0608");
-	CALL `get_pivot_by_month_year_source_table`(paramMonth-1,paramYear, "ReverseManual2005", "prevPivotReverseManual2005");
+	CALL `get_pivot_by_month_year_source_table`(paramMonth-1,paramYear, "ReverseManual2005", "prevpivotRevManual2005");
 	CALL `get_pivot_by_month_year_source_table`(paramMonth-1,paramYear, "FAR2006", "prevPivotFar2006");
 	CALL `get_pivot_by_month_year_source_table`(paramMonth-1,paramYear, "FAR2007", "prevPivotFar2007");
 	CALL `get_pivot_by_month_year_source_table`(paramMonth-1,paramYear, "FAR2008", "prevPivotFar2008");
@@ -54,7 +54,7 @@ BEGIN
 	CALL `get_pivot_by_month_year_source_table`(paramMonth-1,paramYear, "FAR2017", "prevPivotFar2017");
 	
 	CALL `get_pivot_by_month_year_source_table`(paramMonth,paramYear, "SL0608", "pivotSL0608");
-	CALL `get_pivot_by_month_year_source_table`(paramMonth,paramYear, "ReverseManual2005", "pivotReverseManual2005");
+	CALL `get_pivot_by_month_year_source_table`(paramMonth,paramYear, "ReverseManual2005", "pivotRevManual2005");
 	CALL `get_pivot_by_month_year_source_table`(paramMonth,paramYear, "FAR2006", "pivotFar2006");
 	CALL `get_pivot_by_month_year_source_table`(paramMonth,paramYear, "FAR2007", "pivotFar2007");
 	CALL `get_pivot_by_month_year_source_table`(paramMonth,paramYear, "FAR2008", "pivotFar2008");
