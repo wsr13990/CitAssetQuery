@@ -23,18 +23,17 @@ CALL `recalculate_akum_upto`(2016, "tower_depre");
 CALL `get_pivot_by_month_year_source_table`(5,2017, "FAR2011", "tower_depre");
 
 
-CALL `write_off_mapping`(5,2017);
+CALL `write_off_mapping`(6,2017);
 SELECT * FROM control_bulk_2005;
 SELECT * FROM mapping_write_off;
-CALL `update_write_off_date`(5,2017);
+CALL `update_write_off_date`(6,2017);
 CALL `fill_categoryId_byTableName`("mapping_write_off");
 CALL `fill_dpis_monthAndyear_by_tableName`("mapping_write_off");
 CALL `calculate_depre_from_1996_to_parameterYear`(2017,"mapping_write_off");
-CALL `calculate_depre_by_month_year_tableName`(4,2017,"mapping_write_off");
-CALL `update_depre_nbv_wo_by_month_year`(4,2017);
+CALL `calculate_depre_by_month_year_tableName`(5,2017,"mapping_write_off");
+CALL `update_depre_nbv_wo_by_month_year`(5,2017);
 CALL `recalculate_akum_upto`(2016, "mapping_write_off");
 CALL `insert_table_from_to`("mapping_write_off", "write_off_depre");
 
 
-CALL `get_pivot_by_month_year_source_table`(5,2017, "FAR2011", "tower_depre");
-CALL `drop_dm_nm_for_year`(2017, "tower_depre");
+CALL `get_pivot_all`(7,2017);
