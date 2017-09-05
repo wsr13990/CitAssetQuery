@@ -12,7 +12,7 @@ CREATE PROCEDURE `drop_dm_nm_for_year`(IN `year` INT(4), IN tableName VARCHAR(50
 			SET @drop_stmt = CONCAT_WS(",",@drop_stmt, CONCAT('drop dm',@m,'_',`year`,', drop nm',@m,'_',`year`));
 			SET @m = @m + 1;
 		END WHILE;
-		SET @stmt = CONCAT('alter table tableName ',@drop_stmt);
+		SET @stmt = CONCAT('alter table ',tableName ,' ',@drop_stmt);
 		SELECT @stmt;
 		
 		PREPARE stmt FROM @stmt;

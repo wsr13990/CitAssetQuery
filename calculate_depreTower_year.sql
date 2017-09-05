@@ -19,7 +19,7 @@ BEGIN
 		DEALLOCATE PREPARE addColumn;
 	END IF;
 	
-	SET @sqlstmt = CONCAT('update ', tableName,' set d_', parameter_year,'= if(dpis_year = 2011 and dpis_month = 1, get_tower_depre(tower_year_as_building, ',parameter_year,', cost), get_tower_depre(tower_year_as_building,',parameter_year,',n_2010)), n_', parameter_year,'= if(dpis_year = 2011 and parameter_year = 2011, cost - d_',parameter_year,', n_',parameter_year-1,' - d_', parameter_year,') where (dpis_year <= 2011) or (dpis_year = 2011 and dpis_month = 1);');
+	SET @sqlstmt = CONCAT('update ', tableName,' set d_', parameter_year,'= get_tower_depre(dpis_month_end, dpis_year_end ,',parameter_year,', n_',parameter_year-1,'), n_', parameter_year,'= n_',parameter_year-1,' - d_', parameter_year,' where source_detail = "Tower";');
 	PREPARE stmt FROM @sqlstmt;
 	EXECUTE stmt;
 		

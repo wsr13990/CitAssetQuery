@@ -34,8 +34,7 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		SET cost = 0
 		WHERE source_detail = "bulk_2005";
 
-		CREATE
-		TEMPORARY TABLE current_write_off
+		CREATE TEMPORARY TABLE current_write_off
 		(INDEX (asset_number), INDEX(give_up_date),UNIQUE (write_off_id))
 		AS (
 			SELECT write_off.write_off_id AS asset_id, write_off.* FROM write_off
