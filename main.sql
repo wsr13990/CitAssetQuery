@@ -14,7 +14,7 @@ UPDATE `far_addition_monthly` SET `addition_period` = @addition_period, source =
 CALL `fill_categoryId_byTableName`("far_addition_monthly");
 CALL `fill_dpis_monthAndyear_by_tableName`("far_addition_monthly");
 CALL `calculate_depre_from_1996_to_parameterYear`(@year,"far_addition_monthly");
-CALL `calculate_depre_monthly_for_a_year`(2017, "far_addition_monthly");
+CALL `calculate_depre_monthly_for_a_year`(@year, "far_addition_monthly");
 CALL `recalculate_akum_upto`(@year-1, "far_addition_monthly");
 CALL `insert_table_from_to`("far_addition_monthly", "far_depre");
 
@@ -52,10 +52,8 @@ CALL `calculate_depre_by_month_year_tableName`(@month-1,@year,"mapping_write_off
 CALL `update_depre_nbv_wo_by_month_year`(@month-1,@year);
 CALL `recalculate_akum_upto`(@year-1, "mapping_write_off");
 CALL `insert_table_from_to`("mapping_write_off", "write_off_depre");
-#TODO: Make procedure for the query below to calculate chargin depre
-UPDATE `write_off_depre` SET `akum_addition_retire_tahun_yang_sama` = IF(`FAR2017` = 0, 0, (FAR2017/cost)*akum_upto_prev_Year);
-UPDATE `write_off_depre` SET `charging_depre` = `akum_addition_retire_tahun_yang_sama` + `d_2017_sd_date_event`;
-SELECT SUM(`charging_depre`) FROM `write_off_depre`;
+CALL `calculateChargingDepre`(@year);
+
 
 #Create pivot table for each category_id
 CALL `get_pivot_all`(@month,@year);
