@@ -6,10 +6,11 @@ SET @year = 2017;
 ############################################################################################################################################
 ####################################################### Monthly Closing ####################################################################
 ############################################################################################################################################
+SET @faryear = CONCAT("FAR",@year);
 SET @addition_period = LAST_DAY(CONCAT(CAST(@year AS CHAR(4)),"-", CAST(@month AS CHAR(2)),"-", "1"));
 TRUNCATE TABLE far_addition_monthly;
 #Import the addition far to far_addition_monthly
-UPDATE `far_addition_monthly` SET `addition_period` = @addition_period, source = "FAR2017", source_detail = "FAR2017";
+UPDATE `far_addition_monthly` SET `addition_period` = @addition_period, source = @faryear, source_detail = @faryear;
 CALL `fill_categoryId_byTableName`("far_addition_monthly");
 CALL `fill_dpis_monthAndyear_by_tableName`("far_addition_monthly");
 CALL `calculate_depre_from_1996_to_parameterYear`(@year,"far_addition_monthly");
@@ -72,9 +73,9 @@ DEALLOCATE PREPARE stmt;
 ############################################################################################################################################
 ##################################################### New Year Calculation #################################################################
 ############################################################################################################################################
-CALL `calculate_depre_monthly_for_a_year`(2018, "far_depre");
-CALL `calculate_depreTower_year`(2018, "far_depre");
-CALL `calculate_depre_monthly_for_a_year`(2018, "far_depre");
-CALL `calculate_depre_monthly_for_a_year`(2018, "far_depre");
-CALL `recalculate_akum_upto`(2017, "far_depre");
-CALL `drop_dm_nm_for_year`(2017, "far_depre");
+CALL `calculate_depre_monthly_for_a_year`(@year, "far_depre");
+CALL `calculate_depreTower_year`(@year, "far_depre");
+CALL `calculate_depre_monthly_for_a_year`(@year, "far_depre");
+CALL `calculate_depre_monthly_for_a_year`(@year, "far_depre");
+CALL `recalculate_akum_upto`(@year-1, "far_depre");
+CALL `drop_dm_nm_for_year`(@year-1, "far_depre");

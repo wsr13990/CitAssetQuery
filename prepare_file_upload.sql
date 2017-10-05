@@ -1,24 +1,30 @@
-SET @month = 8;
+SET @month = 7;
 SET @year = 2017;
-SET @depre_bulk =  16234701463.2397;
-SET @akum_bulk =  73195352985.96;
+SET @depre_bulk =  14205363780.3347;
+SET @akum_bulk =  63093691311.1151;
+
+
+-- SET @month = 8;
+-- SET @year = 2017;
+-- SET @depre_bulk =  16234701463.2397;
+-- SET @akum_bulk =  73195352985.96;
+
+
+
+#######################################################################################################################################
+#######################################################################################################################################
 SET @manual2005 = 4358183121883;
-
-
-#######################################################################################################################################
-#######################################################################################################################################
-
 SET @addition_date = DATE_FORMAT(LAST_DAY(CONCAT(CAST(@year AS CHAR(4)),"-", CAST(@month AS CHAR(2)),"-", "1")), "%m/%d/%Y");
+SET @addition_period = LAST_DAY(CONCAT(CAST(@year AS CHAR(4)),"-", CAST(@month AS CHAR(2)),"-", "1"));
 SET @wo_date = LAST_DAY(CONCAT(CAST(@year AS CHAR(4)),"-", CAST(@month AS CHAR(2)),"-", "1"));
 
 DROP TABLE IF EXISTS upload;
 DROP TABLE IF EXISTS temp1;
 DROP TABLE IF EXISTS temp2;
-#TODO: manual 2017 masih salah
 #File upload exclude depre building bulk
-SET @far = 	CONCAT('SELECT `asset_number`,`category`,DATE_FORMAT(dpis, "%m/%d/%Y") as dpis,`cost`,`dm',@month,'_',@year,'` AS ytd_deprn,`dm',@month,'_',@year,'`+`akum_upto_prev_Year` AS deprn_reserve, "FISCAL" AS book_type, 1 AS `desc`, source, @addition_date AS period_name
+SET @far = 	CONCAT('SELECT `asset_number`,`category` as category_name,DATE_FORMAT(dpis, "%m/%d/%Y") as dpis,`cost`,`dm',@month,'_',@year,'` AS ytd_deprn,`dm',@month,'_',@year,'`+`akum_upto_prev_Year` AS deprn_reserve, "FISCAL" AS book_type_code, 1 AS `desc`, source, @addition_date AS period_name
 			FROM far_depre
-			WHERE (write_off_date IS NULL or write_off_date >= @wo_date)
+			WHERE (write_off_date IS NULL or write_off_date >= @wo_date) AND addition_period <= @addition_period
 			AND (source = "FAR2006" OR source = "FAR2007" OR source = "FAR2008" OR source = "FAR2009" OR source = "FAR2010"
 				OR source = "FAR2011" OR source = "FAR2012" OR source = "FAR2013" OR source = "FAR2014" OR source = "FAR2015"
 				OR source = "FAR2016" or source = "FAR2017")');
