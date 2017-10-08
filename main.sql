@@ -67,6 +67,12 @@ CALL `get_pivot_manual`(@month, @year, "pivotManual");
 DROP TABLE IF EXISTS pivotIntangibleAsset;
 CALL `get_pivot_intangible_asset`(@month, @year, "pivotIntangibleAsset");
 
+#Display SL0608 pivot by year
+SET @stmt = CONCAT("select source_detail, sum(cost) as cost,sum(akum_upto_prev_year) as akum_upto_prev_year, sum(dm",@month,"_",@year,") as dm",@month,"_",@year," from far_depre where source = 'SL0608' and write_off_date is null group by source_detail;");
+PREPARE stmt FROM @smt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
 
 #Depre YTD for Tower bulk
 #This amount is used as parameter in prepare_file_upload @akum_bulk
