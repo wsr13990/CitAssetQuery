@@ -31,7 +31,7 @@ CREATE PROCEDURE `fill_categoryId_byTableName`(IN tableName VARCHAR(50))
 	
 	#Check if all category_id successfully filled
 	CREATE TEMPORARY TABLE control(`status` VARCHAR(100));
-	SET @stmt = CONCAT('set @control = (select count(category_id) from ',tableName,' where category_id is null or category_id = "");');
+	SET @stmt = CONCAT('set @control = (select count(asset_id) from ',tableName,' where category_id is null or category_id = "");');
 	PREPARE stmt FROM @stmt;
 	EXECUTE stmt;
 	DEALLOCATE PREPARE stmt;

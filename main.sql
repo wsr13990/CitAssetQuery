@@ -1,5 +1,5 @@
 #Closing month and year, change it to the intended closing month and year
-SET @month = 8;
+SET @month = 9;
 SET @year = 2017;
 
 
@@ -8,6 +8,8 @@ SET @year = 2017;
 ############################################################################################################################################
 SET @faryear = CONCAT("FAR",@year);
 SET @addition_period = LAST_DAY(CONCAT(CAST(@year AS CHAR(4)),"-", CAST(@month AS CHAR(2)),"-", "1"));
+
+
 TRUNCATE TABLE far_addition_monthly;
 #Import the addition far to far_addition_monthly
 UPDATE `far_addition_monthly` SET `addition_period` = @addition_period, source = @faryear, source_detail = @faryear;
@@ -24,7 +26,7 @@ TRUNCATE TABLE manual;
 UPDATE `manual` SET `addition_period` = @addition_period, source = "Manual", source_detail = "Manual";
 CALL `fill_categoryId_byTableName`("manual");
 CALL `fill_dpis_monthAndyear_by_tableName`("manual");
-#update manual set category_id = "ARO" where asset_number = 4657 or asset_number = 5355 or asset_number = 5351 or asset_number = 7497 OR asset_number = 5353;
+#update manual set category_id = "ARO" where asset_id = 190088 or asset_id = 190778 or asset_id = 190779 or asset_id = 190959 OR asset_id = 190777;
 CALL `calculate_depre_from_1996_to_parameterYear`(@year,"manual");
 CALL `calculate_depre_monthly_for_a_year`(@year, "manual");
 CALL `recalculate_akum_upto`(@year-1, "manual");
@@ -40,7 +42,10 @@ CALL `calculate_depre_monthly_for_a_year`(@year, "intangible_asset");
 CALL `recalculate_akum_upto`(@year-1, "intangible_asset");
 
 
+
+TRUNCATE TABLE `write_off`;
 #Import the write off to write_off table
+UPDATE write_off SET give_up_date = @addition_period;
 CALL `write_off_mapping`(@month,@year);
 SELECT * FROM control_bulk_2005;
 SELECT * FROM mapping_write_off;
@@ -62,11 +67,17 @@ CALL `get_pivot_manual`(@month, @year, "pivotManual");
 DROP TABLE IF EXISTS pivotIntangibleAsset;
 CALL `get_pivot_intangible_asset`(@month, @year, "pivotIntangibleAsset");
 
+
 #Depre YTD for Tower bulk
+#This amount is used as parameter in prepare_file_upload @akum_bulk
 SET @stmt = CONCAT('select sum(dm',@month,'_',@year,') from far_depre where source = "Tower 2005";');
 PREPARE stmt FROM @stmt;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
+
+#Cost of far_2005
+SET@bulk2005 = 4358183121883;
+SELECT SUM(cost)+ @bulk2005 AS cost_2005 FROM far_depre WHERE source="bulk_2005";
 
 ############################################################################################################################################
 ##################################################### New Year Calculation #################################################################
