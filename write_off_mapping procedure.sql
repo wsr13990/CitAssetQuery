@@ -20,19 +20,19 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		
 		CREATE TEMPORARY TABLE control(`status` VARCHAR(100));
 		CREATE TEMPORARY TABLE not_written_off
-		(INDEX (asset_number), INDEX(source_detail), INDEX(write_off_date), UNIQUE (asset_id) )
+		(INDEX (asset_number), INDEX(source), INDEX(write_off_date), UNIQUE (asset_id) )
 		AS (
 			SELECT	`asset_id`,`entry_type`,`bulk_2005_write_off_date`,`write_off_date`,`asset_number`,
-				`addition_period`,`source`,`source_detail`,`dpis`,`dpis_month`,`dpis_month_end`,
+				`addition_period`,`source`,`dpis`,`dpis_month`,`dpis_month_end`,
 				`dpis_year`,`dpis_year_end`,`category`,`category_id`,`cost`
 			FROM `far_depre`
 			WHERE (write_off_date >= @wo_date OR write_off_date IS NULL) AND
-			source != "ReverseManual2005" AND source != "WO_Manual2011" AND source != "WO_Manual2012" AND source != "WO_Manual2013" AND source != "WO_Manual2014" AND source != "WO_Manual2016"
+			source != "ReverseManual2005" AND source != "WO_Manual"
 		);
 
 		UPDATE not_written_off
 		SET cost = 0
-		WHERE source_detail = "bulk_2005";
+		WHERE source = "bulk_2005";
 
 		CREATE TEMPORARY TABLE current_write_off
 		(INDEX (asset_number), INDEX(give_up_date),UNIQUE (write_off_id))
@@ -48,7 +48,6 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 				not_written_off.asset_number AS asset_number,
 				not_written_off.addition_period AS addition_period,
 				not_written_off.source AS source,
-				not_written_off.source_detail AS source_detail,
 				not_written_off.category AS category,
 				not_written_off.category_id AS category_id,
 				not_written_off.cost AS cost
@@ -61,12 +60,12 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 			SELECT
 				GROUP_CONCAT(DISTINCT
 					CONCAT(
-						'sum( if (source_detail = '
+						'sum( if (source = '
 						,'"'
-						, source_detail
+						, source
 						,'"'
 						,' , cost,0) ) AS '
-						, source_detail,
+						, source,
 						' '
 					))
 			FROM not_written_off
@@ -87,7 +86,7 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		DEALLOCATE PREPARE pivot;
 		
 		
-		SET @sourceSum = (SELECT GROUP_CONCAT(DISTINCT CONCAT('pivot.',source_detail) SEPARATOR ' + ') FROM not_written_off);
+		SET @sourceSum = (SELECT GROUP_CONCAT(DISTINCT CONCAT('pivot.',source) SEPARATOR ' + ') FROM not_written_off);
 		SET @mapping_write_off = CONCAT(
 		'CREATE TABLE mapping_write_off 
 		AS
@@ -113,7 +112,7 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 		SET	bulk_2005 = difference
 		WHERE difference != 0;
 
-		SET @update_sum = (SELECT GROUP_CONCAT(DISTINCT source_detail SEPARATOR ' + ') FROM not_written_off);
+		SET @update_sum = (SELECT GROUP_CONCAT(DISTINCT source SEPARATOR ' + ') FROM not_written_off);
 		SET @update_mapping = CONCAT('
 		UPDATE mapping_write_off
 		SET 	total = (',@update_sum,'),
@@ -143,7 +142,7 @@ CREATE PROCEDURE `write_off_mapping`(IN paramMonth INTEGER(2), IN paramYear INTE
 			SELECT wo.asset_number, wo.bulk_2005 AS calculated_bulk_2005, temp.cost AS actual_bulk_2005 FROM mapping_write_off wo
 			INNER JOIN(
 				SELECT far.* FROM
-					(SELECT * FROM far_depre WHERE source_detail = "bulk_2005") far
+					(SELECT * FROM far_depre WHERE source = "bulk_2005") far
 				INNER JOIN current_write_off
 				ON far.asset_number = current_write_off.asset_number) temp
 			ON wo.asset_number = temp.asset_number

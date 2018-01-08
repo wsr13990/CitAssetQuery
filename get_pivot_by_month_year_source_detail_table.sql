@@ -10,11 +10,11 @@ BEGIN
 	SET @wo_date = LAST_DAY(CONCAT(CAST(paramYear AS CHAR(4)),"-", CAST(paramMonth AS CHAR(2)),"-", "1"));
 	#TODO: change source_detail to source when tower is already imported and calculated
 	SET @pivot = 	CONCAT('create table ',tableName,' as
-				SELECT	source, SUM(cost) as cost,
+				SELECT	source_detail, SUM(cost) as cost,
 					SUM(akum_upto_prev_Year) as akum_upto_prev_Year,
 					SUM(dm', paramMonth,'_',paramYear,') as dm', paramMonth,'_',paramYear,'
-				FROM far_depre  WHERE `source_detail` = "',paramSource,'" AND 
-					(write_off_date IS NULL OR write_off_date > "',@wo_date,'") GROUP BY source;');
+				FROM far_depre  WHERE `source` = "',paramSource,'" AND 
+					(write_off_date IS NULL OR write_off_date > "',@wo_date,'") GROUP BY source_detail;');
 	PREPARE pivot FROM @pivot;
 	EXECUTE pivot;
 	DEALLOCATE PREPARE pivot;

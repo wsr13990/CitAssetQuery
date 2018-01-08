@@ -13,7 +13,7 @@ BEGIN
 				SELECT	category_id, SUM(cost) as cost,
 					SUM(akum_upto_prev_Year) as akum_upto_prev_Year,
 					SUM(dm', paramMonth,'_',paramYear,') as dm', paramMonth,'_',paramYear,'
-				FROM far_depre  WHERE `source` = "',paramSource,'" AND 
+				FROM far_depre  WHERE `source_detail2` = "',paramSource,'" AND 
 					(write_off_date IS NULL OR write_off_date > "',@wo_date,'") GROUP BY category_id;');
 	PREPARE pivot FROM @pivot;
 	EXECUTE pivot;

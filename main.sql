@@ -1,7 +1,7 @@
 #Closing month and year, change it to the intended closing month and year
-SET @month = 9;
+SET @month = 11;
 SET @year = 2017;
-
+SET @depreBulkBangunan =   22322714512;#November
 
 ############################################################################################################################################
 ####################################################### Monthly Closing ####################################################################
@@ -19,6 +19,8 @@ CALL `calculate_depre_from_1996_to_parameterYear`(@year,"far_addition_monthly");
 CALL `calculate_depre_monthly_for_a_year`(@year, "far_addition_monthly");
 CALL `recalculate_akum_upto`(@year-1, "far_addition_monthly");
 CALL `insert_table_from_to`("far_addition_monthly", "far_depre");
+UPDATE far_depre SET source_detail2=source WHERE source_detail2 ='' ;
+UPDATE `far_depre` SET kelompok_aset = get_kelompok_aset(category_id) WHERE kelompok_aset IS NULL;
 
 
 TRUNCATE TABLE manual;
@@ -26,7 +28,12 @@ TRUNCATE TABLE manual;
 UPDATE `manual` SET `addition_period` = @addition_period, source = "Manual", source_detail = "Manual";
 CALL `fill_categoryId_byTableName`("manual");
 CALL `fill_dpis_monthAndyear_by_tableName`("manual");
-#update manual set category_id = "ARO" where asset_id = 190088 or asset_id = 190778 or asset_id = 190779 or asset_id = 190959 OR asset_id = 190777;
+UPDATE manual SET category_id = "ARO" WHERE 	asset_id = 217189 OR
+						asset_id = 217190 OR
+						asset_id = 216977 OR
+						asset_id = 216978 OR
+						asset_id = 216979 OR
+						asset_id = 216288;
 CALL `calculate_depre_from_1996_to_parameterYear`(@year,"manual");
 CALL `calculate_depre_monthly_for_a_year`(@year, "manual");
 CALL `recalculate_akum_upto`(@year-1, "manual");
@@ -74,16 +81,18 @@ EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
 
 
-#Depre YTD for Tower bulk
+#Pivot bulk 2005
+DROP TABLE IF EXISTS pivotBulk2005;
 #This amount is used as parameter in prepare_file_upload @akum_bulk
-SET @stmt = CONCAT('select sum(dm',@month,'_',@year,') from far_depre where source = "Tower 2005";');
+SET @stmt = CONCAT('set @depreTowerBulk = (select sum(dm',@month,'_',@year,') from far_depre where source_detail = "Tower 2005");');
 PREPARE stmt FROM @stmt;
 EXECUTE stmt;
 DEALLOCATE PREPARE stmt;
-
-#Cost of far_2005
-SET@bulk2005 = 4358183121883;
-SELECT SUM(cost)+ @bulk2005 AS cost_2005 FROM far_depre WHERE source="bulk_2005";
+SET @bulk2005 = 4358183121883;
+SET @stmt = CONCAT('create table pivotBulk2005 as SELECT SUM(cost)+ @bulk2005 AS cost_2005, @depreBulkBangunan + @depreTowerBulk as dm',@month,'_',@year,' FROM far_depre WHERE source="bulk_2005";');
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
 
 ############################################################################################################################################
 ##################################################### New Year Calculation #################################################################
