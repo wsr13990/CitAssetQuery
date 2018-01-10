@@ -54,29 +54,29 @@ DROP TABLE IF EXISTS temp2;
 #File upload exclude depre building bulk
 SET @far = 	CONCAT('SELECT `asset_number`,`category` as category_name,DATE_FORMAT(dpis, "%m/%d/%Y") as dpis,`cost`,`dm',@month,'_',@year,'` AS ytd_deprn,`dm',@month,'_',@year,'`+`akum_upto_prev_Year` AS deprn_reserve, "FISCAL" AS book_type_code, 1 AS `desc`, source_detail, @addition_date AS period_name
 			FROM far_depre
-			WHERE (write_off_date IS NULL or write_off_date >= @wo_date) AND addition_period <= @addition_period
+			WHERE (write_off_date IS NULL or write_off_date > @wo_date) AND addition_period <= @addition_period
 			AND (source_detail = "FAR2006" OR source_detail = "FAR2007" OR source_detail = "FAR2008" OR source_detail = "FAR2009" OR source_detail = "FAR2010"
 				OR source_detail = "FAR2011" OR source_detail = "FAR2012" OR source_detail = "FAR2013" OR source_detail = "FAR2014" OR source_detail = "FAR2015"
 				OR source_detail = "FAR2016" or source_detail = "FAR2017")');
 SET @wo_manual_2011 = CONCAT('SELECT `asset_number`,`category`,DATE_FORMAT(dpis, "%m/%d/%Y"),`cost`,`dm',@month,'_',@year,'`,`dm',@month,'_',@year,'`+`akum_upto_prev_Year`, "FISCAL", 1, "WO-Manual2011", @addition_date
 			FROM far_depre
-			WHERE (write_off_date IS NULL or write_off_date >= @wo_date)
+			WHERE (write_off_date IS NULL or write_off_date > @wo_date)
 				AND source_detail = "WO_Manual2011"');
 SET @wo_manual_2012 = CONCAT('SELECT `asset_number`,`category`,DATE_FORMAT(dpis, "%m/%d/%Y"),`cost`,`dm',@month,'_',@year,'`,`dm',@month,'_',@year,'`+`akum_upto_prev_Year`, "FISCAL", 1, "WO-Manual2012", @addition_date
 			FROM far_depre
-			WHERE (write_off_date IS NULL or write_off_date >= @wo_date)
+			WHERE (write_off_date IS NULL or write_off_date > @wo_date)
 				AND source_detail = "WO_Manual2012"');
 SET @wo_manual_2013 = CONCAT('SELECT `asset_number`,`category`,DATE_FORMAT(dpis, "%m/%d/%Y"),`cost`,`dm',@month,'_',@year,'`,`dm',@month,'_',@year,'`+`akum_upto_prev_Year`, "FISCAL", 1, "WO-Manual2013", @addition_date
 			FROM far_depre
-			WHERE (write_off_date IS NULL or write_off_date >= @wo_date)
+			WHERE (write_off_date IS NULL or write_off_date > @wo_date)
 				AND source_detail = "WO_Manual2013"');
 SET @wo_manual_2014 = CONCAT('SELECT `asset_number`,`category`,DATE_FORMAT(dpis, "%m/%d/%Y"),`cost`,`dm',@month,'_',@year,'`,`dm',@month,'_',@year,'`+`akum_upto_prev_Year`, "FISCAL", 1, "WO-Manual2014", @addition_date
 			FROM far_depre
-			WHERE (write_off_date IS NULL or write_off_date >= @wo_date)
+			WHERE (write_off_date IS NULL or write_off_date > @wo_date)
 				AND source_detail = "WO_Manual2014"');
 SET @wo_manual_2016 = CONCAT('SELECT `asset_number`,`category`,DATE_FORMAT(dpis, "%m/%d/%Y"),`cost`,`dm',@month,'_',@year,'`,`dm',@month,'_',@year,'`+`akum_upto_prev_Year`, "FISCAL", 1, "WO-Manual2016", @addition_date
 			FROM far_depre
-			WHERE (write_off_date IS NULL or write_off_date >= @wo_date)
+			WHERE (write_off_date IS NULL or write_off_date > @wo_date)
 				AND source_detail = "WO_Manual2016"');
 SET @rev_manual_2005 = CONCAT('SELECT `asset_number`,`category`,DATE_FORMAT(dpis, "%m/%d/%Y"),`cost`,`dm',@month,'_',@year,'`,`dm',@month,'_',@year,'`+`akum_upto_prev_Year`, "FISCAL", 1, "Reverse Manual 2005", @addition_date
 			FROM far_depre
@@ -95,7 +95,7 @@ DROP TABLE IF EXISTS temp2;
 SET @no_asset_number = CONCAT('	create temporary table temp2(asset_number INT AUTO_INCREMENT PRIMARY KEY) as
 				SELECT `category`,DATE_FORMAT(LAST_DAY(CONCAT(CAST(dpis_year AS CHAR(4)),"-", CAST(dpis_month AS CHAR(2)),"-", "1")), "%m/%d/%Y") as dpis,0 as cost,`dm',@month,'_',@year,'` as ytd_deprn,`dm',@month,'_',@year,'`+`akum_upto_prev_Year` as deprn_reserve, "FISCAL" as book_type_code, 1 as `desc`, "Bulk 2005" as source, @addition_date as period_name
 				FROM far_depre
-				WHERE (write_off_date IS NULL OR write_off_date >= @wo_date) AND source_detail = "Tower 2005"
+				WHERE (write_off_date IS NULL OR write_off_date > @wo_date) AND source_detail = "Tower 2005"
 				UNION all
 				select "Infra", "11/30/1997", @manual2005, 0, 0, "FISCAL", 1, "Bulk 2005", @addition_date
 				UNION all

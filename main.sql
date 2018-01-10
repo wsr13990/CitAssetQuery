@@ -1,7 +1,7 @@
 #Closing month and year, change it to the intended closing month and year
-SET @month = 11;
+SET @month = 12;
 SET @year = 2017;
-SET @depreBulkBangunan =   22322714512;#November
+SET @depreBulkBangunan = 24352052195;#Desember
 
 ############################################################################################################################################
 ####################################################### Monthly Closing ####################################################################
@@ -19,7 +19,7 @@ CALL `calculate_depre_from_1996_to_parameterYear`(@year,"far_addition_monthly");
 CALL `calculate_depre_monthly_for_a_year`(@year, "far_addition_monthly");
 CALL `recalculate_akum_upto`(@year-1, "far_addition_monthly");
 CALL `insert_table_from_to`("far_addition_monthly", "far_depre");
-UPDATE far_depre SET source_detail2=source WHERE source_detail2 ='' ;
+UPDATE far_depre SET source_detail2=source WHERE source_detail2 ='';
 UPDATE `far_depre` SET kelompok_aset = get_kelompok_aset(category_id) WHERE kelompok_aset IS NULL;
 
 
@@ -28,12 +28,14 @@ TRUNCATE TABLE manual;
 UPDATE `manual` SET `addition_period` = @addition_period, source = "Manual", source_detail = "Manual";
 CALL `fill_categoryId_byTableName`("manual");
 CALL `fill_dpis_monthAndyear_by_tableName`("manual");
-UPDATE manual SET category_id = "ARO" WHERE 	asset_id = 217189 OR
-						asset_id = 217190 OR
-						asset_id = 216977 OR
-						asset_id = 216978 OR
-						asset_id = 216979 OR
-						asset_id = 216288;
+UPDATE manual SET category_id = "ARO" WHERE asset_id IN(
+#Fill these with ARO asset number separated by comma
+196196,
+197046,
+197047,
+197050,
+197088
+);
 CALL `calculate_depre_from_1996_to_parameterYear`(@year,"manual");
 CALL `calculate_depre_monthly_for_a_year`(@year, "manual");
 CALL `recalculate_akum_upto`(@year-1, "manual");
@@ -73,6 +75,10 @@ DROP TABLE IF EXISTS pivotManual;
 CALL `get_pivot_manual`(@month, @year, "pivotManual");
 DROP TABLE IF EXISTS pivotIntangibleAsset;
 CALL `get_pivot_intangible_asset`(@month, @year, "pivotIntangibleAsset");
+
+#Pivot WO Tower
+SELECT source_detail, SUM(cost) AS cost FROM far_depre WHERE write_off_date = @addition_period AND asset_number IN
+(SELECT asset_number FROM write_off_depre WHERE tower > 0 AND give_up_date = @addition_period) GROUP BY source_detail;
 
 #Display SL0608 pivot by year
 SET @stmt = CONCAT("select source_detail, sum(cost) as cost,sum(akum_upto_prev_year) as akum_upto_prev_year, sum(dm",@month,"_",@year,") as dm",@month,"_",@year," from far_depre where source = 'SL0608' and write_off_date is null group by source_detail;");
