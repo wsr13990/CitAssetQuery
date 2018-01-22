@@ -29,12 +29,8 @@ UPDATE `manual` SET `addition_period` = @addition_period, source = "Manual", sou
 CALL `fill_categoryId_byTableName`("manual");
 CALL `fill_dpis_monthAndyear_by_tableName`("manual");
 UPDATE manual SET category_id = "ARO" WHERE asset_id IN(
-#Fill these with ARO asset number separated by comma
-196196,
-197046,
-197047,
-197050,
-197088
+#Fill these with ARO asset number
+
 );
 CALL `calculate_depre_from_1996_to_parameterYear`(@year,"manual");
 CALL `calculate_depre_monthly_for_a_year`(@year, "manual");
@@ -103,9 +99,10 @@ DEALLOCATE PREPARE stmt;
 ############################################################################################################################################
 ##################################################### New Year Calculation #################################################################
 ############################################################################################################################################
+USE cit_asset;
+SET @year = 2018;
 CALL `calculate_depre_monthly_for_a_year`(@year, "far_depre");
 CALL `calculate_depreTower_year`(@year, "far_depre");
-CALL `calculate_depre_monthly_for_a_year`(@year, "far_depre");
 CALL `calculate_depre_monthly_for_a_year`(@year, "far_depre");
 CALL `recalculate_akum_upto`(@year-1, "far_depre");
 CALL `drop_dm_nm_for_year`(@year-1, "far_depre");

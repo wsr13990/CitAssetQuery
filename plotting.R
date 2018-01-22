@@ -37,3 +37,36 @@ pie_data_nbv <- aggregate(nm11_2017~kelompok_aset,data,sum)
 pie(pie_data_nbv$nm11_2017,labels = pie_data_nbv$kelompok_aset,
     title='Porsi depre per kelompok aset (sample 100.')+
     title('Proporsi depre per kelompok aset, sample 100.000')
+
+############################################################################################
+library(dplyr)
+library(ggplot2)
+library(ggrepel)
+library(forcats)
+library(scales)
+db = dbConnect(MySQL(),user='root',dbname='history',host='localhost')
+rs = dbSendQuery(db, "SELECT regional, site_id, site_name, far_depre_2014.asset_number,cost
+                      FROM far_depre_2014
+                      LEFT JOIN migration.`site_2009_2015`
+                      ON `site_2009_2015`.asset_number = far_depre_2014.asset_number;")
+data = fetch(rs, n=-1)
+blank_theme <- theme_minimal()+
+  theme(
+    axis.title.x = element_blank(),
+    axis.title.y = element_blank(),
+    panel.border = element_blank(),
+    panel.grid=element_blank(),
+    axis.ticks = element_blank(),
+    plot.title=element_text(size=14, face="bold")
+  )
+
+sumCostByRegional <- aggregate(cost~regional,data,sum)
+sumCostByRegional %>%
+  arrange(desc(cost)) %>%
+  mutate(prop = percent(cost / sum(cost))) -> sumCostByRegional
+pie <- ggplot(sumCostByRegional, aes(x = "", y = cost, fill = fct_inorder(regional))) +
+  geom_bar(width = 1, stat = "identity") + blank_theme + 
+theme(axis.text.x = element_blank())
+  coord_polar("y", start = 0) +
+  geom_text(aes(y = cost, label = prop), size = 5)
+pie
