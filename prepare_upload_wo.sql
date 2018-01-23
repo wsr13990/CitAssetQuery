@@ -1,5 +1,7 @@
-USE history;
 CALL `update_claim_proceed`(6,2017);
+
+
+USE history;
 
 SET @month = 6;
 SET @year = 2017;
@@ -24,17 +26,24 @@ SELECT 	",@claim_proceed,".`je_id_description` AS batch_name,
 	",@claim_proceed,".`asset_category` AS Kategori,
 	",@claim_proceed,".`cost` AS Cost,
 	0 AS deprn_amount,
-	wo_depre.`akum_upto_prev_Year` + wo_depre.`charging_depre` AS deprn_reserve,
+	wo_depre.`akum_upto_prev_Year` + wo_depre.`d_2017_sd_date_event` AS deprn_reserve,
 	'FISCAL' AS book_type_code,
-	",@claim_proceed,".`ar_claim` AS Ar_claim,
-	",@claim_proceed,".`other_income` AS proceed,
+	sum(",@claim_proceed,".`ar_claim`) AS Ar_claim,
+	sum(",@claim_proceed,".`other_income`) AS proceed,
 	wo_depre.type_wo,
 	'' AS `group`,
 	@wo_date AS period_name
 FROM ",@claim_proceed,"
-LEFT JOIN (select * from cit_asset.write_off_depre where month(give_up_date) = @month) wo_depre
-ON wo_depre.`asset_number_wo` = ",@claim_proceed,".`asset_number`
-WHERE wo_depre.give_up_date = @wo_date
+LEFT JOIN (select * from cit_asset.write_off_depre where month(give_up_date) = @month and year(give_up_date) = @year) wo_depre
+ON wo_depre.`asset_number_wo` = ",@claim_proceed,".`asset_number` and wo_depre.category = ",@claim_proceed,".`asset_category`
+WHERE month(period_wo) = @month and year(period_wo) = @year group by asset_number
+");
+PREPARE stmt FROM @stmt;
+EXECUTE stmt;
+DEALLOCATE PREPARE stmt;
+
+
+
 UNION
 SELECT 	cit_asset.`write_off_depre`.`batch` AS batch_name,
 	cit_asset.`write_off_depre`.`give_up_date` AS given_up_date,
@@ -56,11 +65,7 @@ ON cit_asset.`write_off_depre`.`asset_number_wo` = ",@claim_proceed,".`asset_num
 WHERE cit_asset.`write_off_depre`.give_up_date < @wo_date AND MONTH(",@claim_proceed,".`period_wo`) = @month AND YEAR(",@claim_proceed,".`period_wo`) =@year
 UNION
 SELECT * FROM cit_asset.`manual_write_off_fiscal` WHERE MONTH(`period_name`)=@month AND YEAR(`period_name`)=@year;
-");
 
-PREPARE stmt FROM @stmt;
-EXECUTE stmt;
-DEALLOCATE PREPARE stmt;
 
 #######################################################################################################################################
 ####################################CREATE UPLOAD FILE TO CIT SYSTEM FOR WRITE OFF COMMERCIAL##########################################
