@@ -2,15 +2,15 @@ CALL `update_claim_proceed`(6,2017);
 
 
 USE history;
-
 SET @month = 6;
 SET @year = 2017;
-SET @filedate = CONCAT(RIGHT(CONCAT('0',@month),2),RIGHT(@year,2));
-SET @claim_proceed = CONCAT('claim_proceed_',@filedate);
-SET @upload_wo_fiscal = CONCAT('upload_wo_fiscal_',@filedate);
 #######################################################################################################################################
 ########################################CREATE UPLOAD FILE TO CIT SYSTEM FOR WRITE OFF FISCAL##########################################
 #######################################################################################################################################
+SET @filedate = CONCAT(RIGHT(CONCAT('0',@month),2),RIGHT(@year,2));
+SET @claim_proceed = CONCAT('claim_proceed_',@filedate);
+SET @upload_wo_fiscal = CONCAT('upload_wo_fiscal_',@filedate);
+SET @wo_date = LAST_DAY(CONCAT(CAST(@year AS CHAR(4)),"-", CAST(@month AS CHAR(2)),"-", "1"));
 
 SET @stmt = CONCAT("DROP TABLE IF EXISTS ",@upload_wo_fiscal,";");
 PREPARE stmt FROM @stmt;
@@ -20,9 +20,9 @@ DEALLOCATE PREPARE stmt;
 SET @stmt = CONCAT("
 CREATE TABLE ",@upload_wo_fiscal," AS
 SELECT 	",@claim_proceed,".`je_id_description` AS batch_name,
-	",@claim_proceed,".`period_wo` AS given_up_date,
+	DATE_FORMAT(",@claim_proceed,".`period_wo`,'%m/%d/%Y') AS given_up_date,
 	",@claim_proceed,".`asset_number` AS asset_number,
-	",@claim_proceed,".`dpis` AS date_placed_in_service,
+	DATE_FORMAT(",@claim_proceed,".`dpis`,'%m/%d/%Y') AS date_placed_in_service,
 	",@claim_proceed,".`asset_category` AS Kategori,
 	",@claim_proceed,".`cost` AS Cost,
 	0 AS deprn_amount,
@@ -32,10 +32,10 @@ SELECT 	",@claim_proceed,".`je_id_description` AS batch_name,
 	sum(",@claim_proceed,".`other_income`) AS proceed,
 	wo_depre.type_wo,
 	'' AS `group`,
-	@wo_date AS period_name
+	DATE_FORMAT(@wo_date,'%m/%d/%Y') AS period_name
 FROM ",@claim_proceed,"
 LEFT JOIN (select * from cit_asset.write_off_depre where month(give_up_date) = @month and year(give_up_date) = @year) wo_depre
-ON wo_depre.`asset_number_wo` = ",@claim_proceed,".`asset_number` and wo_depre.category = ",@claim_proceed,".`asset_category`
+ON wo_depre.`asset_number_wo` = ",@claim_proceed,".`asset_number`
 WHERE month(period_wo) = @month and year(period_wo) = @year group by asset_number
 ");
 PREPARE stmt FROM @stmt;

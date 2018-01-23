@@ -106,3 +106,5 @@ CALL `calculate_depreTower_year`(@year, "far_depre");
 CALL `calculate_depre_monthly_for_a_year`(@year, "far_depre");
 CALL `recalculate_akum_upto`(@year-1, "far_depre");
 CALL `drop_dm_nm_for_year`(@year-1, "far_depre");
+
+SET GLOBAL innodb_lock_wait_timeout = 5000;
