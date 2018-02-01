@@ -1,17 +1,61 @@
-SET @limit1 = 850000*1;
-SET @limit2 = 850000*2;
-SET @limit3 = 850000*3;
-SET @limit4 = 850000*4;
-SET @limit5 = 850000*5;
+DELIMITER $$
 
-SELECT `asset_number`,`category_name`,`dpis`,`cost`,`ytd_deprn`,`deprn_reserve`,`book_type_code`,`desc`,`source`,`period_name`
-FROM upload_juli WHERE id <= @limit1;
+USE `cit_asset`$$
 
-SELECT `asset_number`,`category_name`,`dpis`,`cost`,`ytd_deprn`,`deprn_reserve`,`book_type_code`,`desc`,`source`,`period_name`
-FROM upload_juli WHERE id > @limit1 AND id <= @limit2;
+DROP PROCEDURE IF EXISTS `split_upload`$$
 
-SELECT `asset_number`,`category_name`,`dpis`,`cost`,`ytd_deprn`,`deprn_reserve`,`book_type_code`,`desc`,`source`,`period_name`
-FROM upload_juli WHERE id > @limit2 AND id <= @limit3;
-
-SELECT `asset_number`,`category_name`,`dpis`,`cost`,`ytd_deprn`,`deprn_reserve`,`book_type_code`,`desc`,`source`,`period_name`
-FROM upload_juli WHERE id > @limit3 AND id <= @limit4;
+CREATE DEFINER=`root`@`localhost` PROCEDURE `split_upload`(IN filename VARCHAR(255), IN countrow INT(6))
+    MODIFIES SQL DATA
+BEGIN
+	SET @stmt = CONCAT("set @row = (select count(*) from history.",filename,")");
+	PREPARE stmt FROM @stmt;
+	EXECUTE stmt;
+	DEALLOCATE PREPARE stmt;
+	
+	SET @split = CEIL(@row/countrow);
+	SET @i = 0;
+	SET @stmt = CONCAT("
+	set @col = (SELECT REPLACE(GROUP_CONCAT('`',COLUMN_NAME,'`'),'`id`,','')
+	FROM INFORMATION_SCHEMA.COLUMNS
+	WHERE TABLE_NAME = '",filename,"'
+	ORDER BY ORDINAL_POSITION);
+	");
+	PREPARE stmt FROM @stmt;
+	EXECUTE stmt;
+	DEALLOCATE PREPARE stmt;
+	
+	DROP TABLE IF EXISTS header;
+	
+	SET @header = (SELECT REPLACE(GROUP_CONCAT("'",COLUMN_NAME,"'"),"'id',","")
+	FROM INFORMATION_SCHEMA.COLUMNS
+	WHERE TABLE_NAME = filename
+	ORDER BY ORDINAL_POSITION);
+	WHILE @i < @split DO
+		SET @timestamp = UNIX_TIMESTAMP();
+		SET @limit = @i*countrow;
+		
+		DROP TABLE IF EXISTS content;
+		SET @stmt = CONCAT("
+		create temporary table content as
+		select ",@col," from history.",filename," limit ",@limit,",",countrow,";
+		");
+		PREPARE stmt FROM @stmt;
+		EXECUTE stmt;
+		DEALLOCATE PREPARE stmt;
+		
+		SET @stmt = CONCAT("
+		select * into outfile 'D:/Kerja/CitAsset/Upload/",filename,"_",@i,"_",@timestamp,".csv'
+		FIELDS TERMINATED BY ',' LINES TERMINATED BY '\n'
+		from
+		(SELECT ",@header,"
+		union all
+		select * from content)temp;
+		");
+		PREPARE stmt FROM @stmt;
+		EXECUTE stmt;
+		DEALLOCATE PREPARE stmt;
+		SET @i = @i+1;
+	END WHILE;
+	
+END$$
+DELIMITER ;

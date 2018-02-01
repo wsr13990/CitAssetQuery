@@ -7,10 +7,10 @@
 -- SET @depre_tower_2005 =  @depreTowerBulk;
 
 
--- SET @month = 7;
--- SET @year = 2017;
--- SET @depre_bangunan_bulk = 14205363780.3347;
--- SET @depre_tower_2005 =  63093691311.1151;
+SET @month = 7;
+SET @year = 2017;
+SET @depre_bangunan_bulk = 14205363780.3347;
+SET @depre_tower_2005 =  63093691311.1151;
 
 
 -- SET @month = 8;
@@ -33,10 +33,10 @@
 -- SET @depre_bangunan_bulk =  22322714512;
 -- SET @depre_tower_2005 =  @depreTowerBulk;
 
-SET @month = 12;
-SET @year = 2017;
-SET @depre_bangunan_bulk =  24352052195;
-SET @depre_tower_2005 =  @depreTowerBulk;
+-- SET @month = 12;
+-- SET @year = 2017;
+-- SET @depre_bangunan_bulk =  24352052195;
+-- SET @depre_tower_2005 =  @depreTowerBulk;
 
 
 
